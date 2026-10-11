@@ -1568,30 +1568,41 @@
      COUNTER (count-up)
      ============================================ */
   function buildFooter() {
-    const birth = new Date(CONFIG.tanggalLahir);
-    const now = new Date();
-    const diff = now - birth;
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor(diff / 3600000);
-    const months = Math.floor(days / 30.44);
-    const weeks = Math.floor(days / 7);
-    const heartbeats = Math.floor(diff / 60000 * 72);
-    const counters = [
-      { num: CONFIG.usia, label: 'Tahun' },
-      { num: months, label: 'Bulan' },
-      { num: weeks, label: 'Minggu' },
-      { num: days, label: 'Hari' },
-      { num: hours, label: 'Jam' },
-      { num: heartbeats, label: 'Detak Jantung' }
-    ];
-    const grid = $('counter-grid');
-    counters.forEach((c) => {
-      const item = el('div', 'counter-item');
-      item.innerHTML = `<div class="counter-num" data-target="${c.num}">0</div><div class="counter-label">${c.label}</div>`;
-      grid.appendChild(item);
-    });
-    observeCounters();
-  }
+  const birth = new Date(CONFIG.tanggalLahir);
+  const now = new Date();
+  const diff = now - birth;
+
+  // Usia & bulan akurat (berdasarkan kalender, bukan perkiraan)
+  let years = now.getFullYear() - birth.getFullYear();
+  let monthsTotal = years * 12 + (now.getMonth() - birth.getMonth());
+
+  // Kalau tanggal/bulan ulang tahun belum lewat, kurangi
+  if (now.getDate() < birth.getDate()) monthsTotal--;
+  years = Math.floor(monthsTotal / 12);
+
+  const days = Math.floor(diff / 86400000);
+  const weeks = Math.floor(days / 7);
+  const hours = Math.floor(diff / 3600000);
+  const heartbeats = Math.floor((diff / 60000) * 72);
+
+  const counters = [
+    { num: years, label: 'Tahun' },
+    { num: monthsTotal, label: 'Bulan' },
+    { num: weeks, label: 'Minggu' },
+    { num: days, label: 'Hari' },
+    { num: hours, label: 'Jam' },
+    { num: heartbeats, label: 'Detak Jantung' }
+  ];
+
+  const grid = $('counter-grid');
+  grid.innerHTML = ''; // cegah dobel kalau dipanggil ulang
+  counters.forEach((c) => {
+    const item = el('div', 'counter-item');
+    item.innerHTML = `<div class="counter-num" data-target="${c.num}">0</div><div class="counter-label">${c.label}</div>`;
+    grid.appendChild(item);
+  });
+  observeCounters();
+}
   function observeCounters() {
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { animateCounter(e.target); obs.unobserve(e.target); } });
